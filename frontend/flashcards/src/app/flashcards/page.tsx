@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Flashcard = {
   id: number;
@@ -8,11 +8,27 @@ type Flashcard = {
   answer: string;
 };
 
-export default function flashCardsPage() {
-  const [flashCards, setFlashCards] = useState<Flashcard[]>([
-    { id: 1, question: 'What is the capital of Australia?', answer: 'Canberra' }, 
-    { id: 2, question: 'What is 2 + 2?', answer: '4' },
-  ]);
+export default function FlashcardsPage() {
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/flashcards')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch flashcards');
+        return res.json();
+      })
+      .then(data => {
+        setFlashcards(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
 
   const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -22,22 +38,22 @@ export default function flashCardsPage() {
 
   const handleNext = () => {
     setShowAnswer(false);
-    setIndex((prev) => (prev + 1) % flashCards.length);
+    setIndex((prev) => (prev + 1) % flashcards.length);
   };
 
   const handlePrev = () => {
     setShowAnswer(false);
-    setIndex((prev) => (prev - 1 + flashCards.length) % flashCards.length);
+    setIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length);
   };
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
     const newCard: Flashcard = {
-      id: flashCards.length + 1,
+      id: flashcards.length + 1,
       question: newQuestion,
       answer: newAnswer,
     };
-    setFlashCards([...flashCards, newCard]);
+    setFlashcards([...flashcards, newCard]);
     setNewQuestion('');
     setNewAnswer('');
   };
@@ -58,8 +74,8 @@ export default function flashCardsPage() {
         }}
         onClick={() => setShowAnswer(!showAnswer)}
       >
-        {flashCards.length > 0 ? (
-          <p>{showAnswer ? flashCards[index].answer : flashCards[index].question}</p>
+        {flashcards.length > 0 ? (
+          <p>{showAnswer ? flashcards[index].answer : flashcards[index].question}</p>
         ) : (
           <p>No flashcards yet!</p>
         )}
